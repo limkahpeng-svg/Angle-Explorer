@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angle Explorer - Primary 3 Math Game</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            blue: '#3b82f6',
+                            purple: '#8b5cf6',
+                            yellow: '#f59e0b',
+                            green: '#10b981',
+                            pink: '#ec4899',
+                            dark: '#1e293b'
+                        }
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .heading-font {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Interactive Angle Arc styling */
+        .angle-arc {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .angle-arc:hover {
+            stroke-width: 4px;
+            filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.8));
+        }
+
+        .angle-arc.selected {
+            stroke: #f59e0b;
+            fill: rgba(245, 158, 11, 0.35);
+            stroke-width: 4px;
+            animation: pulse-select 1.5s infinite alternate;
+        }
+
+        .angle-arc.correct {
+            stroke: #10b981 !important;
+            fill: rgba(16, 185, 129, 0.4) !important;
+            stroke-width: 4px !important;
+        }
+
+        .angle-arc.wrong {
+            stroke: #ef4444 !important;
+            fill: rgba(239, 68, 68, 0.4) !important;
+            stroke-width: 4px !important;
+        }
+
+        @keyframes pulse-select {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        /* Custom set square / right angle tester */
+        #tester-tool {
+            touch-action: none;
+            cursor: grab;
+        }
+
+        #tester-tool:active {
+            cursor: grabbing;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Bounce Animation */
+        .bounce-gentle {
+            animation: bounce-gentle 2s infinite;
+        }
+
+        @keyframes bounce-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Top Header -->
+    <header class="bg-white border-b-4 border-emerald-400 px-4 py-3 shadow-md sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <!-- Brand Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-emerald-500 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg transform -rotate-3">
+                    <i class="fa-solid fa-[# ruler-combined] fa-ruler-combined"></i>
+                </div>
+                <div>
+                    <h1 class="heading-font text-2xl md:text-3xl font-bold text-emerald-700 leading-none">Angle Explorer</h1>
+                    <p class="text-xs font-semibold text-slate-500">Primary 3 Math Practice</p>
+                </div>
+            </div>
+
+            <!-- Header Stats & Actions -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <div class="flex items-center bg-amber-100 border-2 border-amber-300 rounded-full px-3 py-1 text-amber-800 font-bold text-sm sm:text-base">
+                    <i class="fa-solid fa-star text-amber-500 mr-1.5 text-lg"></i>
+                    <span id="score-display">0</span>
+                </div>
+                <div class="flex items-center bg-blue-100 border-2 border-blue-300 rounded-full px-3 py-1 text-blue-800 font-bold text-sm sm:text-base">
+                    <i class="fa-solid fa-layer-group text-blue-500 mr-1.5"></i>
+                    <span id="level-display">Level 1/8</span>
+                </div>
+                <button id="sound-btn" onclick="toggleSound()" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 rounded-full flex items-center justify-center text-slate-600 transition">
+                    <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-6xl w-full mx-auto p-3 md:p-6 flex-grow flex flex-col gap-4">
+        
+        <!-- Game Instruction Card -->
+        <div id="question-card" class="glass-panel border-2 border-emerald-300 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-amber-400 text-white flex-shrink-0 flex items-center justify-center text-2xl shadow">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <div>
+                    <span id="target-badge" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-800 mb-1">
+                        Task
+                    </span>
+                    <h2 id="question-text" class="heading-font text-lg md:text-xl font-bold text-slate-800">
+                        In the figure below, click to select all angles that are <span class="text-indigo-600 underline decoration-wavy">greater than a right angle</span>.
+                    </h2>
+                </div>
+            </div>
+
+            <!-- Interactive Tool Toggle & Actions -->
+            <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                <button id="toggle-tester-btn" onclick="toggleTesterTool()" class="flex items-center gap-2 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-2 border-indigo-200 rounded-xl font-bold text-sm transition">
+                    <i class="fa-solid fa-square-plus"></i>
+                    <span id="tester-btn-text">Show Right Angle Tester</span>
+                </button>
+                <button onclick="resetCurrentSelection()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border-2 border-slate-300 rounded-xl font-bold text-sm transition">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Clear
+                </button>
+            </div>
+        </div>
+
+        <!-- Interactive Canvas & Work Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-grow">
+            
+            <!-- Figure Canvas Box (3/4 width on desktop) -->
+            <div class="lg:col-span-3 bg-white rounded-3xl border-4 border-slate-200 shadow-lg p-3 md:p-6 flex flex-col justify-between relative overflow-hidden min-h-[420px]">
+                
+                <!-- Helper Guide Overlay / Mascot Message -->
+                <div id="mascot-hint" class="absolute top-4 left-4 z-10 glass-panel border border-slate-200 rounded-2xl p-3 shadow-md max-w-xs flex items-center gap-3 transition-opacity">
+                    <div class="text-3xl bounce-gentle">🦉</div>
+                    <div class="text-xs text-slate-700 font-semibold leading-tight">
+                        <span id="mascot-text">Click directly on the angle arcs in the shape to answer!</span>
+                    </div>
+                </div>
+
+                <!-- Main Interactive SVG Grid Canvas Container -->
+                <div id="canvas-wrapper" class="w-full flex-grow flex items-center justify-center relative my-2">
+                    <svg id="game-svg" class="w-full h-full max-h-[500px] border border-slate-200 rounded-2xl bg-white shadow-inner" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet">
+                        <!-- Grid pattern dynamically injected here -->
+                    </svg>
+
+                    <!-- Draggable Interactive Right-Angle Set Square Tool -->
+                    <div id="tester-tool" class="hidden absolute top-10 right-10 bg-indigo-500/20 border-4 border-indigo-600 rounded-tl-none rounded-tr-lg rounded-bl-lg rounded-br-lg shadow-2xl backdrop-blur-xs flex flex-col justify-between p-2 z-20 transition-transform origin-top-left" style="width: 140px; height: 140px; transform: rotate(0deg);">
+                        <div class="flex justify-between items-start">
+                            <span class="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">90° Corner</span>
+                            <button onclick="rotateTesterTool(event)" class="w-7 h-7 bg-white hover:bg-indigo-100 text-indigo-700 rounded-full shadow flex items-center justify-center text-xs font-bold" title="Rotate Square">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+                        <div class="text-[10px] font-bold text-indigo-900 text-center bg-white/80 rounded py-0.5 pointer-events-none">
+                            Drag square corner to check angle
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Control & Action Bar -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                    <!-- Legend -->
+                    <div class="flex items-center gap-4 text-xs font-extrabold text-slate-600 flex-wrap">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded-full bg-blue-500 inline-block"></span> Acute (&lt; 90°)
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block"></span> Right Angle (= 90°)
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded-full bg-purple-500 inline-block"></span> Obtuse (&gt; 90°)
+                        </span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button id="submit-btn" onclick="checkAnswer()" class="w-full sm:w-auto px-8 py-3 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-extrabold text-lg rounded-2xl shadow-lg border-b-4 border-emerald-700 transition flex items-center justify-center gap-2">
+                        <span>Check Answer</span>
+                        <i class="fa-solid fa-check"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sidebar: Angle Knowledge Cheat Sheet & Progress -->
+            <div class="lg:col-span-1 flex flex-col gap-4">
+                
+                <!-- Quick Guide Card -->
+                <div class="bg-white rounded-3xl border-3 border-slate-200 p-4 shadow-sm flex flex-col gap-3">
+                    <h3 class="heading-font font-bold text-slate-800 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-compass text-amber-500"></i> Angle Quick Guide
+                    </h3>
+                    
+                    <!-- Acute Card -->
+                    <div class="p-2.5 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-blue-500 text-white flex items-center justify-center text-lg font-black">
+                            &lt;
+                        </div>
+                        <div>
+                            <div class="font-extrabold text-blue-900 text-sm">Acute Angle</div>
+                            <div class="text-xs text-blue-700">Smaller than a right angle</div>
+                        </div>
+                    </div>
+
+                    <!-- Right Angle Card -->
+                    <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-lg font-black">
+                            L
+                        </div>
+                        <div>
+                            <div class="font-extrabold text-emerald-900 text-sm">Right Angle</div>
+                            <div class="text-xs text-emerald-700">Square corner (Exactly 90°)</div>
+                        </div>
+                    </div>
+
+                    <!-- Obtuse Card -->
+                    <div class="p-2.5 rounded-xl bg-purple-50 border border-purple-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-purple-500 text-white flex items-center justify-center text-lg font-black">
+                            &gt;
+                        </div>
+                        <div>
+                            <div class="font-extrabold text-purple-900 text-sm">Obtuse Angle</div>
+                            <div class="text-xs text-purple-700">Greater than a right angle</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Level Selector Palette -->
+                <div class="bg-white rounded-3xl border-3 border-slate-200 p-4 shadow-sm flex-grow">
+                    <h3 class="heading-font font-bold text-slate-800 text-sm mb-3 flex items-center justify-between">
+                        <span>Level Select</span>
+                        <span class="text-xs font-normal text-slate-500">8 Questions</span>
+                    </h3>
+                    <div id="level-grid" class="grid grid-cols-4 gap-2">
+                        <!-- Level buttons dynamically generated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl border-4 border-slate-200 max-w-md w-full p-6 text-center shadow-2xl transform transition-all scale-95 opacity-0" id="modal-content">
+            
+            <div id="modal-icon-bg" class="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl mb-4 shadow-lg">
+                <i id="modal-icon" class="fa-solid fa-trophy"></i>
+            </div>
+
+            <h3 id="modal-title" class="heading-font text-2xl font-bold text-slate-800 mb-2">Great Job!</h3>
+            <p id="modal-message" class="text-slate-600 font-semibold mb-6">You identified all the angles correctly!</p>
+
+            <div id="modal-explanation" class="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs text-slate-600 mb-6 text-left space-y-1">
+                <!-- Detailed explanation injected here -->
+            </div>
+
+            <div class="flex items-center justify-center gap-3">
+                <button onclick="closeModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition">
+                    Review Figure
+                </button>
+                <button id="next-level-btn" onclick="nextLevel()" class="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl shadow-md border-b-4 border-emerald-700 transition">
+                    Next Level <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* SOUND FX SYSTEM (Web Audio API) */
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.linearRampToValueAtTime(130, now + 0.25);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const soundIcon = document.getElementById('sound-icon');
+            if (soundEnabled) {
+                soundIcon.className = 'fa-solid fa-volume-high';
+            } else {
+                soundIcon.className = 'fa-solid fa-volume-xmark';
+            }
+        }
+
+        /* LEVEL DATASET */
+        // Grid dimension: 12 cols x 8 rows
+        // Coordinates map to grid cell intersections: (0..12, 0..8)
+        const LEVELS = [
+            {
+                id: 1,
+                title: "Sample Question from Paper",
+                questionText: "In the figure below, how many of the marked angles are <span class='text-purple-600 font-extrabold underline decoration-wavy'>greater than a right angle</span> (obtuse)? Click to select them!",
+                targetType: "obtuse", // acute, right, obtuse
+                gridWidth: 11,
+                gridHeight: 7,
+                polygon: [
+                    { x: 3, y: 1 },  // Vertex A
+                    { x: 2, y: 3 },  // Vertex B
+                    { x: 4, y: 3 },  // Vertex C (Inner notch)
+                    { x: 3, y: 5 },  // Vertex D
+                    { x: 7, y: 6 },  // Vertex E (Bottom right)
+                    { x: 7, y: 2 }   // Vertex F (Top right)
+                ],
+                // Angles to be marked on shape
+                markedVertices: [0, 1, 3, 4, 5] // Indices in polygon array
+            },
+            {
+                id: 2,
+                title: "Finding Right Angles",
+                questionText: "Click on all the <span class='text-emerald-600 font-extrabold underline decoration-wavy'>right angles</span> (square corners = 90°) in this figure.",
+                targetType: "right",
+                gridWidth: 10,
+                gridHeight: 7,
+                polygon: [
+                    { x: 2, y: 1 },
+                    { x: 8, y: 1 },
+                    { x: 8, y: 4 },
+                    { x: 5, y: 4 },
+                    { x: 5, y: 6 },
+                    { x: 2, y: 6 }
+                ],
+                markedVertices: [0, 1, 2, 3, 4, 5]
+            },
+            {
+                id: 3,
+                title: "Spotting Acute Angles",
+                questionText: "Click on all the <span class='text-blue-600 font-extrabold underline decoration-wavy'>acute angles</span> (smaller than a right angle) in this figure.",
+                targetType: "acute",
+                gridWidth: 10,
+                gridHeight: 7,
+                polygon: [
+                    { x: 5, y: 1 }, // Top vertex (acute)
+                    { x: 8, y: 6 }, // Bottom right (acute)
+                    { x: 2, y: 6 }  // Bottom left (acute)
+                ],
+                markedVertices: [0, 1, 2]
+            },
+            {
+                id: 4,
+                title: "Arrowhead Challenge",
+                questionText: "How many marked angles are <span class='text-purple-600 font-extrabold underline decoration-wavy'>obtuse</span> (greater than a right angle)? Click them!",
+                targetType: "obtuse",
+                gridWidth: 10,
+                gridHeight: 7,
+                polygon: [
+                    { x: 5, y: 1 },
+                    { x: 8, y: 5 },
+                    { x: 5, y: 3.5 }, // Notch
+                    { x: 2, y: 5 }
+                ],
+                markedVertices: [0, 1, 2, 3]
+            },
+            {
+                id: 5,
+                title: "Trapezoid Angles",
+                questionText: "Identify all angles that are <span class='text-purple-600 font-extrabold underline decoration-wavy'>greater than a right angle</span> (obtuse).",
+                targetType: "obtuse",
+                gridWidth: 10,
+                gridHeight: 7,
+                polygon: [
+                    { x: 3, y: 2 },
+                    { x: 7, y: 2 },
+                    { x: 9, y: 6 },
+                    { x: 1, y: 6 }
+                ],
+                markedVertices: [0, 1, 2, 3]
+            },
+            {
+                id: 6,
+                title: "House Contour",
+                questionText: "Find and select all the <span class='text-emerald-600 font-extrabold underline decoration-wavy'>right angles</span> (exactly 90°).",
+                targetType: "right",
+                gridWidth: 10,
+                gridHeight: 7,
+                polygon: [
+                    { x: 5, y: 1 },
+                    { x: 8, y: 3 },
+                    { x: 8, y: 6 },
+                    { x: 2, y: 6 },
+                    { x: 2, y: 3 }
+                ],
+                markedVertices: [0, 1, 2, 3, 4]
+            },
+            {
+                id: 7,
+                title: "Star Tip Search",
+                questionText: "Click on all the <span class='text-blue-600 font-extrabold underline decoration-wavy'>acute angles</span> (less than a right angle).",
+                targetType: "acute",
+                gridWidth: 10,
+                gridHeight: 7,
+                polygon: [
+                    { x: 5, y: 1 },
+                    { x: 6, y: 3 },
+                    { x: 8, y: 3 },
+                    { x: 6.5, y: 4.5 },
+                    { x: 7.5, y: 6.5 },
+                    { x: 5, y: 5.2 },
+                    { x: 2.5, y: 6.5 },
+                    { x: 3.5, y: 4.5 },
+                    { x: 2, y: 3 },
+                    { x: 4, y: 3 }
+                ],
+                markedVertices: [0, 2, 4, 6, 8] // Just the tips
+            },
+            {
+                id: 8,
+                title: "Irregular Gem Figure",
+                questionText: "Find all angles that are <span class='text-purple-600 font-extrabold underline decoration-wavy'>greater than a right angle</span> (obtuse).",
+                targetType: "obtuse",
+                gridWidth: 10,
+                gridHeight: 7,
+                polygon: [
+                    { x: 3, y: 1 },
+                    { x: 7, y: 1 },
+                    { x: 9, y: 3 },
+                    { x: 6, y: 6 },
+                    { x: 1, y: 4 }
+                ],
+                markedVertices: [0, 1, 2, 3, 4]
+            }
+        ];
+
+        /* STATE VARIABLES */
+        let currentLevelIdx = 0;
+        let score = 0;
+        let selectedAngleIndices = new Set();
+        let angleAnalysisResults = []; // Stores details for current figure
+
+        /**
+         * Calculates interior angle in degrees at vertex i for polygon points
+         */
+        function calculateInteriorAngle(points, i) {
+            const n = points.length;
+            const prev = points[(i - 1 + n) % n];
+            const curr = points[i];
+            const next = points[(i + 1) % n];
+
+            // Vector 1: curr -> prev
+            const v1 = { x: prev.x - curr.x, y: prev.y - curr.y };
+            // Vector 2: curr -> next
+            const v2 = { x: next.x - curr.x, y: next.y - curr.y };
+
+            // Absolute angles from horizontal (y inverted in screen coords)
+            let angle1 = Math.atan2(v1.y, v1.x);
+            let angle2 = Math.atan2(v2.y, v2.x);
+
+            // Angle difference
+            let diff = angle2 - angle1;
+            while (diff < 0) diff += 2 * Math.PI;
+            while (diff >= 2 * Math.PI) diff -= 2 * Math.PI;
+
+            let deg = (diff * 180) / Math.PI;
+
+            // Determine if polygon orientation is clockwise/counter-clockwise to get interior angle
+            let area = 0;
+            for (let j = 0; j < n; j++) {
+                const p1 = points[j];
+                const p2 = points[(j + 1) % n];
+                area += (p1.x * p2.x) - (p1.y * p2.y); // simplified check or standard signed area
+            }
+
+            // Standard signed area for orientation
+            let signedArea = 0;
+            for (let j = 0; j < n; j++) {
+                const p1 = points[j];
+                const p2 = points[(j + 1) % n];
+                signedArea += (p1.x * p2.y - p2.x * p1.y);
+            }
+
+            // If points are counter-clockwise (signedArea < 0 in standard SVG coords where Y is down)
+            if (signedArea < 0) {
+                deg = 360 - deg;
+            }
+
+            // Ensure interior angle for simple polygons
+            if (deg > 360) deg -= 360;
+
+            // Classify angle with strict 90 degree tolerance
+            let type = "acute";
+            if (Math.abs(deg - 90) < 0.5) {
+                type = "right";
+                deg = 90;
+            } else if (deg < 90) {
+                type = "acute";
+            } else if (deg > 90 && deg < 180) {
+                type = "obtuse";
+            } else {
+                type = "reflex";
+            }
+
+            return {
+                deg: Math.round(deg * 10) / 10,
+                type: type,
+                angle1: angle1,
+                angle2: angle2
+            };
+        }
+
+        function loadLevel(idx) {
+            currentLevelIdx = idx;
+            const level = LEVELS[idx];
+            selectedAngleIndices.clear();
+
+            // Update UI Labels
+            document.getElementById('level-display').innerText = `Level ${idx + 1}/${LEVELS.length}`;
+            document.getElementById('question-text').innerHTML = level.questionText;
+
+            const badge = document.getElementById('target-badge');
+            if (level.targetType === 'obtuse') {
+                badge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide bg-purple-100 text-purple-800 mb-1";
+                badge.innerText = "Target: Obtuse Angles (> 90°)";
+            } else if (level.targetType === 'right') {
+                badge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-800 mb-1";
+                badge.innerText = "Target: Right Angles (= 90°)";
+            } else {
+                badge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide bg-blue-100 text-blue-800 mb-1";
+                badge.innerText = "Target: Acute Angles (< 90°)";
+            }
+
+            // Render level selection sidebar grid
+            renderLevelGrid();
+
+            // Render SVG Figure
+            renderSVGFigure(level);
+        }
+
+        function renderSVGFigure(level) {
+            const svg = document.getElementById('game-svg');
+            svg.innerHTML = ''; // Clear SVG
+
+            const svgWidth = 800;
+            const svgHeight = 500;
+            const padding = 50;
+
+            const gridCols = level.gridWidth;
+            const gridRows = level.gridHeight;
+
+            const cellW = (svgWidth - 2 * padding) / gridCols;
+            const cellH = (svgHeight - 2 * padding) / gridRows;
+
+            // Helper to map grid coordinates (x,y) to SVG pixels
+            function toPixel(pt) {
+                return {
+                    x: padding + pt.x * cellW,
+                    y: padding + pt.y * cellH
+                };
+            }
+
+            /* 1. Draw Grid Lines */
+            const gridGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gridGroup.setAttribute("stroke", "#e2e8f0");
+            gridGroup.setAttribute("stroke-width", "1.5");
+
+            for (let c = 0; c <= gridCols; c++) {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", padding + c * cellW);
+                line.setAttribute("y1", padding);
+                line.setAttribute("x2", padding + c * cellW);
+                line.setAttribute("y2", svgHeight - padding);
+                gridGroup.appendChild(line);
+            }
+            for (let r = 0; r <= gridRows; r++) {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", padding);
+                line.setAttribute("y1", padding + r * cellH);
+                line.setAttribute("x2", svgWidth - padding);
+                line.setAttribute("y2", padding + r * cellH);
+                gridGroup.appendChild(line);
+            }
+            svg.appendChild(gridGroup);
+
+            /* 2. Calculate Polygon Pixel Vertices & Angle Analysis */
+            const pixelPolygon = level.polygon.map(toPixel);
+            angleAnalysisResults = [];
+
+            level.polygon.forEach((pt, i) => {
+                const analysis = calculateInteriorAngle(level.polygon, i);
+                angleAnalysisResults.push({
+                    vertexIndex: i,
+                    gridPt: pt,
+                    pixelPt: pixelPolygon[i],
+                    deg: analysis.deg,
+                    type: analysis.type,
+                    isMarked: level.markedVertices.includes(i)
+                });
+            });
+
+            /* 3. Draw Main Polygon */
+            const polyPointsStr = pixelPolygon.map(p => `${p.x},${p.y}`).join(" ");
+            const polygonEl = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            polygonEl.setAttribute("points", polyPointsStr);
+            polygonEl.setAttribute("fill", "rgba(248, 250, 252, 0.75)");
+            polygonEl.setAttribute("stroke", "#1e293b");
+            polygonEl.setAttribute("stroke-width", "3.5");
+            polygonEl.setAttribute("stroke-linejoin", "round");
+            svg.appendChild(polygonEl);
+
+            /* 4. Draw Interactive Marked Angle Arcs */
+            angleAnalysisResults.forEach((item) => {
+                if (!item.isMarked) return;
+
+                const i = item.vertexIndex;
+                const curr = pixelPolygon[i];
+                const prev = pixelPolygon[(i - 1 + pixelPolygon.length) % pixelPolygon.length];
+                const next = pixelPolygon[(i + 1) % pixelPolygon.length];
+
+                // Arc radius
+                const r = 32;
+
+                // Vectors
+                const v1 = { x: prev.x - curr.x, y: prev.y - curr.y };
+                const v2 = { x: next.x - curr.x, y: next.y - curr.y };
+
+                const len1 = Math.hypot(v1.x, v1.y);
+                const len2 = Math.hypot(v2.x, v2.y);
+
+                const u1 = { x: v1.x / len1, y: v1.y / len1 };
+                const u2 = { x: v2.x / len2, y: v2.y / len2 };
+
+                // Angle start and end points
+                const pStart = { x: curr.x + u1.x * r, y: curr.y + u1.y * r };
+                const pEnd = { x: curr.x + u2.x * r, y: curr.y + u2.y * r };
+
+                // Build SVG Arc Path
+                const angleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                angleGroup.setAttribute("class", "angle-group");
+                angleGroup.setAttribute("data-index", i);
+
+                let d = "";
+                // If right angle, option to draw square corner or arc
+                if (item.type === 'right' && false) { // keep consistent arc for easy clicking
+                    const squareR = 22;
+                    const cornerX = curr.x + u1.x * squareR + u2.x * squareR;
+                    const cornerY = curr.y + u1.y * squareR + u2.y * squareR;
+                    d = `M ${curr.x + u1.x * squareR} ${curr.y + u1.y * squareR} L ${cornerX} ${cornerY} L ${curr.x + u2.x * squareR} ${curr.y + u2.y * squareR}`;
+                } else {
+                    // Standard arc path
+                    const largeArcFlag = item.deg > 180 ? 1 : 0;
+                    // Compute sweep flag based on cross product
+                    const cross = u1.x * u2.y - u1.y * u2.x;
+                    const sweepFlag = cross > 0 ? 1 : 0;
+
+                    d = `M ${curr.x} ${curr.y} L ${pStart.x} ${pStart.y} A ${r} ${r} 0 ${largeArcFlag} ${sweepFlag} ${pEnd.x} ${pEnd.y} Z`;
+                }
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", d);
+                path.setAttribute("id", `angle-arc-${i}`);
+                path.setAttribute("class", "angle-arc");
+                path.setAttribute("fill", "rgba(59, 130, 246, 0.15)");
+                path.setAttribute("stroke", "#2563eb");
+                path.setAttribute("stroke-width", "2.5");
+
+                // Click event for selecting angle
+                angleGroup.addEventListener("click", () => toggleAngleSelect(i));
+
+                angleGroup.appendChild(path);
+
+                // Add a vertex indicator dot
+                const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                dot.setAttribute("cx", curr.x);
+                dot.setAttribute("cy", curr.y);
+                dot.setAttribute("r", "4");
+                dot.setAttribute("fill", "#1e293b");
+                angleGroup.appendChild(dot);
+
+                svg.appendChild(angleGroup);
+            });
+        }
+
+        function toggleAngleSelect(index) {
+            playSound('click');
+            const arc = document.getElementById(`angle-arc-${index}`);
+            if (!arc) return;
+
+            if (selectedAngleIndices.has(index)) {
+                selectedAngleIndices.delete(index);
+                arc.classList.remove('selected');
+            } else {
+                selectedAngleIndices.add(index);
+                arc.classList.add('selected');
+            }
+
+            // Mascot encouragement update
+            const count = selectedAngleIndices.size;
+            document.getElementById('mascot-text').innerText = count === 0 
+                ? "Click directly on the angle arcs to select your answers!" 
+                : `You have selected ${count} angle${count > 1 ? 's' : ''}. Click 'Check Answer' when ready!`;
+        }
+
+        function resetCurrentSelection() {
+            playSound('click');
+            selectedAngleIndices.forEach(idx => {
+                const arc = document.getElementById(`angle-arc-${idx}`);
+                if (arc) arc.classList.remove('selected', 'correct', 'wrong');
+            });
+            selectedAngleIndices.clear();
+            document.getElementById('mascot-text').innerText = "Selection cleared. Click on the angle arcs to answer!";
+        }
+
+        function checkAnswer() {
+            const level = LEVELS[currentLevelIdx];
+            const targetType = level.targetType;
+
+            // Determine all correct vertex indices for target type among marked vertices
+            const correctIndices = angleAnalysisResults
+                .filter(item => item.isMarked && item.type === targetType)
+                .map(item => item.vertexIndex);
+
+            let isAllCorrect = true;
+
+            // Check if selected matches correct exactly
+            if (selectedAngleIndices.size !== correctIndices.length) {
+                isAllCorrect = false;
+            } else {
+                correctIndices.forEach(idx => {
+                    if (!selectedAngleIndices.has(idx)) isAllCorrect = false;
+                });
+            }
+
+            // Highlight angle arcs with Green / Red feedback
+            angleAnalysisResults.forEach(item => {
+                if (!item.isMarked) return;
+                const idx = item.vertexIndex;
+                const arc = document.getElementById(`angle-arc-${idx}`);
+                if (!arc) return;
+
+                const isTarget = item.type === targetType;
+                const isSelected = selectedAngleIndices.has(idx);
+
+                arc.classList.remove('selected');
+
+                if (isTarget) {
+                    arc.classList.add('correct');
+                } else if (isSelected && !isTarget) {
+                    arc.classList.add('wrong');
+                }
+            });
+
+            // Show feedback modal
+            showModal(isAllCorrect, level, correctIndices);
+        }
+
+        function showModal(isCorrect, level, correctIndices) {
+            const modal = document.getElementById('feedback-modal');
+            const modalContent = document.getElementById('modal-content');
+            const iconBg = document.getElementById('modal-icon-bg');
+            const icon = document.getElementById('modal-icon');
+            const title = document.getElementById('modal-title');
+            const msg = document.getElementById('modal-message');
+            const explanation = document.getElementById('modal-explanation');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            if (isCorrect) {
+                playSound('correct');
+                score += 100;
+                document.getElementById('score-display').innerText = score;
+
+                iconBg.className = "w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl mb-4 shadow-lg bg-emerald-100 text-emerald-600";
+                icon.className = "fa-solid fa-circle-check";
+                title.innerText = "Awesome Job! 🎉";
+                title.className = "heading-font text-2xl font-bold text-emerald-700 mb-2";
+                msg.innerText = `You correctly identified all ${correctIndices.length} ${level.targetType} angle(s)!`;
+            } else {
+                playSound('wrong');
+                iconBg.className = "w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl mb-4 shadow-lg bg-amber-100 text-amber-600";
+                icon.className = "fa-solid fa-circle-xmark";
+                title.innerText = "Let's Check Together! 💡";
+                title.className = "heading-font text-2xl font-bold text-amber-700 mb-2";
+                msg.innerText = "Some angles were missed or incorrectly selected.";
+            }
+
+            // Build explanation summary
+            let expHTML = `<div class="font-bold text-slate-800 mb-1">Angle Breakdown for this shape:</div>`;
+            angleAnalysisResults.forEach(item => {
+                if (!item.isMarked) return;
+                const typeName = item.type === 'right' ? 'Right Angle (= 90°)' : (item.type === 'acute' ? 'Acute Angle (< 90°)' : 'Obtuse Angle (> 90°)');
+                const badgeColor = item.type === 'right' ? 'bg-emerald-100 text-emerald-800' : (item.type === 'acute' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800');
+                
+                expHTML += `
+                    <div class="flex items-center justify-between py-1 border-b border-slate-200/60 last:border-0">
+                        <span>Angle at Corner (${item.gridPt.x}, ${item.gridPt.y}):</span>
+                        <span class="px-2 py-0.5 rounded text-[11px] font-extrabold ${badgeColor}">${typeName} (${item.deg}°)</span>
+                    </div>
+                `;
+            });
+            explanation.innerHTML = expHTML;
+        }
+
+        function closeModal() {
+            playSound('click');
+            const modal = document.getElementById('feedback-modal');
+            const modalContent = document.getElementById('modal-content');
+
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        function nextLevel() {
+            closeModal();
+            if (currentLevelIdx < LEVELS.length - 1) {
+                loadLevel(currentLevelIdx + 1);
+            } else {
+                // Game completed!
+                loadLevel(0); // Loop back
+            }
+        }
+
+        function renderLevelGrid() {
+            const grid = document.getElementById('level-grid');
+            grid.innerHTML = '';
+
+            LEVELS.forEach((lvl, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `h-10 rounded-xl font-bold text-sm flex items-center justify-center transition border-2 ${
+                    idx === currentLevelIdx
+                        ? 'bg-emerald-500 text-white border-emerald-600 shadow-md scale-105'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                }`;
+                btn.innerText = idx + 1;
+                btn.onclick = () => {
+                    playSound('click');
+                    loadLevel(idx);
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        let testerToolVisible = false;
+        let testerRotation = 0;
+
+        function toggleTesterTool() {
+            playSound('click');
+            const tool = document.getElementById('tester-tool');
+            const btnText = document.getElementById('tester-btn-text');
+            testerToolVisible = !testerToolVisible;
+
+            if (testerToolVisible) {
+                tool.classList.remove('hidden');
+                btnText.innerText = "Hide Tester Tool";
+            } else {
+                tool.classList.add('hidden');
+                btnText.innerText = "Show Right Angle Tester";
+            }
+        }
+
+        function rotateTesterTool(e) {
+            e.stopPropagation();
+            playSound('click');
+            testerRotation = (testerRotation + 45) % 360;
+            const tool = document.getElementById('tester-tool');
+            tool.style.transform = `rotate(${testerRotation}deg)`;
+        }
+
+        // Draggable functionality for Tester Tool
+        const testerTool = document.getElementById('tester-tool');
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        testerTool.addEventListener('mousedown', startDrag);
+        testerTool.addEventListener('touchstart', startDrag, { passive: false });
+
+        function startDrag(e) {
+            isDragging = true;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const rect = testerTool.getBoundingClientRect();
+            dragOffsetX = clientX - rect.left;
+            dragOffsetY = clientY - rect.top;
+
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('touchmove', onDrag, { passive: false });
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function onDrag(e) {
+            if (!isDragging) return;
+            if (e.preventDefault) e.preventDefault();
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const wrapper = document.getElementById('canvas-wrapper').getBoundingClientRect();
+
+            let newLeft = clientX - wrapper.left - dragOffsetX;
+            let newTop = clientY - wrapper.top - dragOffsetY;
+
+            testerTool.style.left = `${newLeft}px`;
+            testerTool.style.top = `${newTop}px`;
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('touchmove', onDrag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+
+        /* INITIALIZE GAME ON LOAD */
+        window.onload = function() {
+            loadLevel(0);
+        };
+    </script>
+</body>
+</html>
